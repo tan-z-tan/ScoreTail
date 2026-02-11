@@ -138,8 +138,9 @@ While the source code is currently closed, there are several ways to contribute:
 
 ## Connect
 
-- 🌐 [scoretail.com](https://scoretail.com)
-- 🐦 [@scoretail](https://x.com/scoretail) on X
+- [https://scoretail.com](https://scoretail.com)
+- [@scoretail](https://x.com/scoretail) on X
+- Author [@tan_z_tan](https://x.com/tan_z_tan)
 
 ---
 
