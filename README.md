@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="assets/android-chrome-512x512.png" alt="ScoreTail" width="200" />
+  <img src="assets/logo.png" alt="ScoreTail" width="200" />
 </p>
 
 <h3 align="center">Online Collaborative Music Score Editor</h3>
