@@ -24,7 +24,7 @@
 ---
 
 <p align="center">
-  <img src="assets/hero.png" alt="ScoreTail Screenshot" width="800" />
+  <img src="assets/screenshot1.png" alt="ScoreTail Screenshot" width="800" />
 </p>
 
 ## What is ScoreTail?
