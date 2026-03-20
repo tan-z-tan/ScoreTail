@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScoreTail — The score editor that plays well with others</title>
+  <meta name="description"
+    content="A free online music score editor with real-time collaboration. Open your browser and start making music together.">
+  <meta property="og:title" content="ScoreTail — Free Online Collaborative Score Editor">
+  <meta property="og:description"
+    content="Write, play, and share sheet music together in real-time. No install, no signup.">
+  <meta property="og:image" content="https://scoretail.com/api/og/top">
+  <link rel="icon" href="https://scoretail.com/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link
+    href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Inter:wght@400;500;600&display=swap"
+    rel="stylesheet">
+  <style>
+    *,
+    *::before,
+    *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    :root {
+      --paper: #FAF7F2;
+      --paper-deep: #F0EBE3;
+      --ink: #1C1917;
+      --ink-light: #57534E;
+      --ink-faint: #A8A29E;
+      --accent: #4F46E5;
+      --accent-warm: #D97706;
+      --staff: #D6D3CD;
+      --serif: 'DM Serif Display', Georgia, 'Times New Roman', serif;
+      --sans: 'Inter', -apple-system, system-ui, sans-serif;
+    }
+
+    body {
+      font-family: var(--sans);
+      color: var(--ink);
+      background: var(--paper);
+      line-height: 1.65;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a {
+      color: inherit;
+    }
+
+    img {
+      max-width: 100%;
+      display: block;
+    }
+
+    /* ---- Staff line motif ---- */
+    .staff-divider {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      padding: 0 0;
+      max-width: 200px;
+    }
+
+    .staff-divider span {
+      display: block;
+      height: 1px;
+      background: var(--staff);
+    }
+
+    .staff-divider.wide {
+      max-width: 100%;
+    }
+
+    /* ---- Nav ---- */
+    nav {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 100;
+      transition: background 0.4s, box-shadow 0.4s;
+    }
+
+    nav.scrolled {
+      background: rgba(250, 247, 242, 0.92);
+      backdrop-filter: blur(16px);
+      box-shadow: 0 1px 0 var(--staff);
+    }
+
+    .nav-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 32px;
+    }
+
+    .nav-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-family: var(--serif);
+      font-size: 1.25rem;
+      text-decoration: none;
+      color: var(--ink);
+    }
+
+    .nav-logo img {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 32px;
+    }
+
+    .nav-links a {
+      font-size: 0.88rem;
+      color: var(--ink-light);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .nav-links a:hover {
+      color: var(--ink);
+    }
+
+    .nav-links .cta-link {
+      color: var(--ink);
+      font-weight: 600;
+      padding: 8px 20px;
+      border: 1.5px solid var(--ink);
+      border-radius: 6px;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .nav-links .cta-link:hover {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .nav-toggle {
+      display: none;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    .nav-toggle span {
+      display: block;
+      width: 22px;
+      height: 1.5px;
+      background: var(--ink);
+      margin: 5px 0;
+    }
+
+    @media (max-width: 700px) {
+      .nav-toggle {
+        display: block;
+      }
+
+      .nav-links {
+        position: absolute;
+        top: 100%;
+        left: 0;
+        right: 0;
+        background: var(--paper);
+        flex-direction: column;
+        gap: 0;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s;
+        box-shadow: 0 1px 0 var(--staff);
+      }
+
+      .nav-links.open {
+        max-height: 300px;
+      }
+
+      .nav-links a {
+        padding: 14px 32px;
+        width: 100%;
+      }
+
+      .nav-links .cta-link {
+        margin: 12px 32px;
+        width: auto;
+        text-align: center;
+      }
+    }
+
+    /* ---- Hero ---- */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 140px 32px 80px;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .hero-upper {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+      margin-bottom: 48px;
+    }
+
+    .hero-demo-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
+      flex-wrap: wrap;
+    }
+
+    .demo-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--accent);
+      background: rgba(79, 70, 229, 0.08);
+      padding: 4px 12px;
+      border-radius: 4px;
+    }
+
+    .demo-badge::before {
+      content: '';
+      display: inline-block;
+      width: 6px;
+      height: 6px;
+      background: var(--accent);
+      border-radius: 50%;
+      animation: pulse-dot 2s ease infinite;
+    }
+
+    @keyframes pulse-dot {
+
+      0%,
+      100% {
+        opacity: 1;
+      }
+
+      50% {
+        opacity: 0.3;
+      }
+    }
+
+    .demo-hint {
+      font-size: 0.82rem;
+      color: var(--ink-faint);
+    }
+
+    .demo-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .demo-card {
+      background: var(--paper-deep);
+      border: 1px solid var(--staff);
+      border-radius: 12px;
+      overflow: hidden;
+      transition: box-shadow 0.3s;
+    }
+
+    .demo-card:hover {
+      box-shadow: 0 8px 40px rgba(28, 25, 23, 0.1);
+    }
+
+    .demo-card-head {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--staff);
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .demo-card-title {
+      font-family: var(--serif);
+      font-size: 1rem;
+    }
+
+    .demo-card-composer {
+      font-size: 0.82rem;
+      color: var(--ink-faint);
+    }
+
+    .demo-card-embed iframe {
+      display: block;
+      width: 100%;
+      height: 360px;
+      border: none;
+    }
+
+    .hero h1 {
+      font-family: var(--serif);
+      font-size: clamp(2.4rem, 5vw, 3.6rem);
+      font-weight: 400;
+      line-height: 1.15;
+      letter-spacing: -0.01em;
+      margin-bottom: 24px;
+    }
+
+    .hero h1 em {
+      font-style: italic;
+      color: var(--accent);
+    }
+
+    .hero-sub {
+      font-size: 1.05rem;
+      color: var(--ink-light);
+      max-width: 400px;
+      margin-bottom: 36px;
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--paper);
+      background: var(--ink);
+      padding: 14px 28px;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .hero-cta:hover {
+      opacity: 0.85;
+    }
+
+    .hero-cta-sub {
+      display: block;
+      margin-top: 12px;
+      font-size: 0.82rem;
+      color: var(--ink-faint);
+    }
+
+    @media (max-width: 840px) {
+      .hero-upper {
+        grid-template-columns: 1fr;
+        gap: 40px;
+      }
+    }
+
+    /* ---- Section primitives ---- */
+    section {
+      padding: 100px 32px;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .section-head {
+      max-width: 560px;
+      margin-bottom: 56px;
+    }
+
+    .section-head.center {
+      margin-left: auto;
+      margin-right: auto;
+      text-align: center;
+    }
+
+    .section-label {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--ink-faint);
+      font-weight: 600;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: var(--serif);
+      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+      font-weight: 400;
+      line-height: 1.2;
+      margin-bottom: 16px;
+    }
+
+    .section-desc {
+      font-size: 1rem;
+      color: var(--ink-light);
+      line-height: 1.7;
+    }
+
+    /* ---- Scroll animation ---- */
+    .reveal {
+      opacity: 0;
+      transform: translateY(24px);
+      transition: opacity 0.6s ease, transform 0.6s ease;
+    }
+
+    .reveal.visible {
+      opacity: 1;
+      transform: none;
+    }
+
+    /* ---- Why section ---- */
+    .why {
+      background: var(--paper);
+    }
+
+    .why-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 48px;
+    }
+
+    @media (max-width: 700px) {
+      .why-grid {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+    }
+
+    .why-item h3 {
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      font-weight: 400;
+      margin-bottom: 10px;
+    }
+
+    .why-item p {
+      font-size: 0.92rem;
+      color: var(--ink-light);
+      line-height: 1.7;
+    }
+
+    .why-number {
+      font-family: var(--serif);
+      font-size: 3rem;
+      color: var(--staff);
+      line-height: 1;
+      margin-bottom: 12px;
+    }
+
+    /* ---- Collaboration section ---- */
+    .collab {
+      background: var(--ink);
+      color: var(--paper);
+    }
+
+    .collab .section-label {
+      color: var(--ink-faint);
+    }
+
+    .collab .section-desc {
+      color: rgba(250, 247, 242, 0.65);
+    }
+
+    .collab-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 64px;
+      align-items: center;
+    }
+
+    @media (max-width: 840px) {
+      .collab-layout {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .collab-points {
+      display: flex;
+      flex-direction: column;
+      gap: 32px;
+    }
+
+    .collab-point h3 {
+      font-family: var(--serif);
+      font-size: 1.15rem;
+      font-weight: 400;
+      margin-bottom: 6px;
+    }
+
+    .collab-point p {
+      font-size: 0.9rem;
+      color: rgba(250, 247, 242, 0.6);
+      line-height: 1.65;
+    }
+
+    .collab-visual {
+      position: relative;
+      background: rgba(250, 247, 242, 0.05);
+      border: 1px solid rgba(250, 247, 242, 0.1);
+      border-radius: 12px;
+      padding: 40px 32px;
+      min-height: 300px;
+      overflow: hidden;
+    }
+
+    .collab-cursor {
+      position: absolute;
+      transition: all 2.5s cubic-bezier(0.25, 0.1, 0.25, 1);
+    }
+
+    .collab-cursor svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .collab-cursor-label {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: #fff;
+      white-space: nowrap;
+      margin-left: 12px;
+      margin-top: -2px;
+    }
+
+    /* ---- Comparison ---- */
+    .comparison {
+      background: var(--paper-deep);
+    }
+
+    .comp-table-wrap {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+
+    .comp-table th,
+    .comp-table td {
+      text-align: left;
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--staff);
+    }
+
+    .comp-table thead th {
+      font-weight: 600;
+      font-size: 0.82rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--ink-faint);
+      border-bottom: 2px solid var(--ink);
+      white-space: nowrap;
+    }
+
+    .comp-table thead th:nth-child(2) {
+      color: var(--ink);
+    }
+
+    .comp-table tbody td:first-child {
+      font-weight: 500;
+      color: var(--ink);
+    }
+
+    .comp-table tbody td {
+      color: var(--ink-light);
+    }
+
+    .comp-table tbody td:nth-child(2) {
+      color: var(--ink);
+      font-weight: 500;
+    }
+
+    .comp-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    .comp-note {
+      margin-top: 24px;
+      font-size: 0.82rem;
+      color: var(--ink-faint);
+      font-style: italic;
+    }
+
+    @media (max-width: 600px) {
+      .comp-table {
+        font-size: 0.82rem;
+      }
+
+      .comp-table th,
+      .comp-table td {
+        padding: 10px 12px;
+      }
+    }
+
+    /* ---- Open section (formats + library) ---- */
+    .open-section {
+      background: var(--paper);
+    }
+
+    .open-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+    }
+
+    @media (max-width: 700px) {
+      .open-grid {
+        grid-template-columns: 1fr;
+        gap: 36px;
+      }
+    }
+
+    .open-card {
+      padding: 40px;
+      background: var(--paper-deep);
+      border: 1px solid var(--staff);
+      border-radius: 12px;
+    }
+
+    .open-card-icon {
+      font-size: 1.8rem;
+      margin-bottom: 16px;
+      line-height: 1;
+    }
+
+    .open-card h3 {
+      font-family: var(--serif);
+      font-size: 1.3rem;
+      font-weight: 400;
+      margin-bottom: 10px;
+    }
+
+    .open-card p {
+      font-size: 0.92rem;
+      color: var(--ink-light);
+      line-height: 1.7;
+      margin-bottom: 16px;
+    }
+
+    .open-card-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.88rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+
+    .open-card-link:hover {
+      opacity: 0.7;
+    }
+
+    .format-tags {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .format-tag {
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 4px;
+      background: var(--paper);
+      border: 1px solid var(--staff);
+      color: var(--ink-light);
+      font-family: 'SF Mono', 'Fira Code', monospace;
+    }
+
+    /* ---- CTA ---- */
+    .final-cta {
+      padding: 120px 32px;
+      text-align: center;
+    }
+
+    .final-cta h2 {
+      font-family: var(--serif);
+      font-size: clamp(2rem, 4vw, 3rem);
+      font-weight: 400;
+      margin-bottom: 12px;
+    }
+
+    .final-cta p {
+      color: var(--ink-light);
+      font-size: 1rem;
+      margin-bottom: 36px;
+    }
+
+    .final-cta a {
+      display: inline-flex;
+      padding: 16px 36px;
+      background: var(--ink);
+      color: var(--paper);
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: opacity 0.2s;
+    }
+
+    .final-cta a:hover {
+      opacity: 0.85;
+    }
+
+    /* ---- Footer ---- */
+    footer {
+      border-top: 1px solid var(--staff);
+      padding: 40px 32px;
+    }
+
+    .footer-inner {
+      max-width: 1100px;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-left {
+      font-family: var(--serif);
+      font-size: 0.9rem;
+      color: var(--ink-light);
+      font-style: italic;
+    }
+
+    .footer-links {
+      display: flex;
+      gap: 24px;
+    }
+
+    .footer-links a {
+      font-size: 0.82rem;
+      color: var(--ink-faint);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .footer-links a:hover {
+      color: var(--ink);
+    }
+  </style>
+</head>
+
+<body>
+
+  <nav id="navbar">
+    <div class="nav-inner">
+      <a href="#" class="nav-logo">
+        <img src="https://scoretail.com/scoretail.png" alt="">
+        ScoreTail
+      </a>
+      <button class="nav-toggle" onclick="document.querySelector('.nav-links').classList.toggle('open')"
+        aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div class="nav-links">
+        <a href="#why">About</a>
+        <a href="#collaboration">Collaboration</a>
+        <a href="#comparison">Compare</a>
+        <a href="#open">Formats</a>
+        <a href="https://scoretail.com" target="_blank" rel="noopener" class="cta-link">Open Editor</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- =============== Hero =============== -->
+  <div class="hero">
+    <div class="hero-upper">
+      <div>
+        <h1>The score editor that <em>plays well</em> with&nbsp;others.</h1>
+        <p class="hero-sub">
+          Write music in your browser. Invite anyone to join.
+          Changes sync in real-time — no install, no signup required.
+        </p>
+        <a href="https://scoretail.com" class="hero-cta" target="_blank" rel="noopener">
+          Start writing music
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </a>
+        <span class="hero-cta-sub">Free. No account needed.</span>
+      </div>
+      <div>
+        <img src="https://scoretail.com/screenshot1.png" alt="ScoreTail editor — Bach Minuet in G Major"
+          style="border-radius:12px;box-shadow:0 2px 40px rgba(28,25,23,0.06);border:1px solid var(--staff);" />
+      </div>
+    </div>
+    <div class="hero-demo-label">
+      <span class="demo-badge">Interactive Demo</span>
+      <span class="demo-hint">Real scores you can play, scroll, and explore right here.</span>
+    </div>
+    <div class="demo-grid">
+      <div class="demo-card">
+        <div class="demo-card-head">
+          <span class="demo-card-title">Canon in D</span>
+          <span class="demo-card-composer">Pachelbel</span>
+        </div>
+        <div class="demo-card-embed">
+          <iframe src="https://scoretail.com/embed/nkq3VitdMnZbbi8GgiJH?title=Canon%20in%20D" allow="autoplay"
+            loading="eager" title="Canon in D"></iframe>
+        </div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-card-head">
+          <span class="demo-card-title">Clair de Lune</span>
+          <span class="demo-card-composer">Debussy</span>
+        </div>
+        <div class="demo-card-embed">
+          <iframe src="https://scoretail.com/embed/Bz95qGso4jj9WhY0PjLd?title=Clair%20de%20Lune&range=50,50,500,100"
+            allow="autoplay" loading="lazy" title="Clair de Lune"></iframe>
+        </div>
+      </div>
+      <div class="demo-card">
+        <div class="demo-card-head">
+          <span class="demo-card-title">The Entertainer</span>
+          <span class="demo-card-composer">Joplin</span>
+        </div>
+        <div class="demo-card-embed">
+          <iframe src="https://scoretail.com/embed/rcF03ZN32FUZvZPV0lZU?title=The%20Entertainer" allow="autoplay"
+            loading="lazy" title="The Entertainer"></iframe>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- =============== Why =============== -->
+  <section class="why" id="why">
+    <div class="container">
+      <div class="staff-divider wide reveal">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <div style="height:56px"></div>
+      <div class="section-head reveal">
+        <div class="section-label">Why ScoreTail</div>
+        <h2 class="section-title">Music was never meant to be a solo act.</h2>
+        <p class="section-desc">Traditional notation software was built for isolated desktops and professional
+          engravers. ScoreTail is built for musicians who want to create, share, and enjoy music together.</p>
+      </div>
+      <div class="why-grid">
+        <div class="why-item reveal">
+          <div class="why-number">01</div>
+          <h3>Just open a browser</h3>
+          <p>No downloads. No installation wizards. Open a link and you're in the editor. Works on any device with a
+            browser.</p>
+        </div>
+        <div class="why-item reveal">
+          <div class="why-number">02</div>
+          <h3>Compose with keyboard</h3>
+          <p>Press A–G for pitch, 1–6 for duration, Space to play. Input flows as naturally as playing an instrument.
+          </p>
+        </div>
+        <div class="why-item reveal">
+          <div class="why-number">03</div>
+          <h3>Share a link, not a file</h3>
+          <p>Every score has a URL. Send it to a bandmate, a student, or post it on social media. MusicXML import/export
+            when you need it.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============== Collaboration =============== -->
+  <section class="collab" id="collaboration">
+    <div class="container">
+      <div class="collab-layout">
+        <div>
+          <div class="section-head reveal">
+            <div class="section-label">Real-time Collaboration</div>
+            <h2 class="section-title" style="color:var(--paper)">Every edit, together.</h2>
+            <p class="section-desc">Built on CRDT — the same technology behind collaborative text editors. No conflicts,
+              no "your turn."</p>
+          </div>
+          <div class="collab-points">
+            <div class="collab-point reveal">
+              <h3>Simultaneous editing</h3>
+              <p>Multiple people write notes on the same score at the same time. Every change appears instantly on
+                everyone's screen.</p>
+            </div>
+            <div class="collab-point reveal">
+              <h3>Color-coded cursors</h3>
+              <p>See exactly where each collaborator is working. No stepping on each other's toes.</p>
+            </div>
+            <div class="collab-point reveal">
+              <h3>One link to invite</h3>
+              <p>No accounts, no invitations, no permissions setup. Share the URL and start composing together.</p>
+            </div>
+          </div>
+        </div>
+        <div class="collab-visual reveal" id="collabDemo">
+          <img src="https://scoretail.com/screenshot2.jpg"
+            alt="ScoreTail collaboration — Beethoven An die ferne Geliebte"
+            style="border-radius:8px;width:100%;display:block;" />
+          <div class="collab-cursor" id="cursor1" style="left:28%;top:18%">
+            <svg viewBox="0 0 16 16">
+              <path d="M2 1l10 6.5L6 10l-2 5z" fill="#818CF8" />
+            </svg>
+            <span class="collab-cursor-label" style="background:#818CF8">Alice</span>
+          </div>
+          <div class="collab-cursor" id="cursor2" style="left:58%;top:48%">
+            <svg viewBox="0 0 16 16">
+              <path d="M2 1l10 6.5L6 10l-2 5z" fill="#F472B6" />
+            </svg>
+            <span class="collab-cursor-label" style="background:#F472B6">Bob</span>
+          </div>
+          <div class="collab-cursor" id="cursor3" style="left:42%;top:72%">
+            <svg viewBox="0 0 16 16">
+              <path d="M2 1l10 6.5L6 10l-2 5z" fill="#34D399" />
+            </svg>
+            <span class="collab-cursor-label" style="background:#34D399">Carol</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============== Comparison =============== -->
+  <section class="comparison" id="comparison">
+    <div class="container">
+      <div class="section-head center reveal">
+        <div class="section-label">Comparison</div>
+        <h2 class="section-title">Different tools for different needs.</h2>
+        <p class="section-desc">Every editor has its strengths. Here's an honest look at where each one shines.</p>
+      </div>
+      <div class="comp-table-wrap reveal">
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th></th>
+              <th>ScoreTail</th>
+              <th>MuseScore</th>
+              <th>Flat.io</th>
+              <th>Noteflight</th>
+              <th>Sibelius / Finale</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Price</td>
+              <td>Free</td>
+              <td>Free</td>
+              <td>Freemium</td>
+              <td>Freemium</td>
+              <td>Paid</td>
+            </tr>
+            <tr>
+              <td>Platform</td>
+              <td>Web</td>
+              <td>Desktop</td>
+              <td>Web</td>
+              <td>Web</td>
+              <td>Desktop</td>
+            </tr>
+            <tr>
+              <td>Install required</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>No</td>
+              <td>No</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td>Real-time collaboration</td>
+              <td>Yes (CRDT)</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>Limited</td>
+              <td>No</td>
+            </tr>
+            <tr>
+              <td>No signup to try</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>No</td>
+              <td>No</td>
+              <td>No</td>
+            </tr>
+            <tr>
+              <td>MusicXML</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td>Playback</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>Yes</td>
+            </tr>
+            <tr>
+              <td>Embeddable (iframe)</td>
+              <td>Yes</td>
+              <td>No</td>
+              <td>Yes</td>
+              <td>Yes</td>
+              <td>No</td>
+            </tr>
+            <tr>
+              <td>Advanced engraving</td>
+              <td>Basic</td>
+              <td>Advanced</td>
+              <td>Basic</td>
+              <td>Basic</td>
+              <td>Professional</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="comp-note reveal">ScoreTail focuses on collaboration and accessibility rather than professional
+        publishing. If you need publication-grade engraving, MuseScore or Sibelius may be a better fit.</p>
+    </div>
+  </section>
+
+  <!-- =============== Open Formats & Library =============== -->
+  <section class="open-section" id="open">
+    <div class="container">
+      <div class="section-head reveal">
+        <div class="section-label">Open & Compatible</div>
+        <h2 class="section-title">Bring your music in. Take it&nbsp;anywhere.</h2>
+        <p class="section-desc">ScoreTail works with standard music formats and offers a growing library of free sheet
+          music to explore.</p>
+      </div>
+      <div class="open-grid">
+        <div class="open-card reveal">
+          <div class="open-card-icon">&#9834;</div>
+          <h3>MusicXML & ABC notation</h3>
+          <div class="format-tags">
+            <span class="format-tag">MusicXML</span>
+            <span class="format-tag">ABC</span>
+          </div>
+          <p>Import scores from MuseScore, Sibelius, Dorico, or any editor that exports MusicXML. ABC notation is also
+            supported for quick lead-sheet input. Export back anytime — your music is never locked in.</p>
+        </div>
+        <div class="open-card reveal">
+          <div class="open-card-icon">&#9836;</div>
+          <h3>Free sheet music library</h3>
+          <p>Browse public domain classics — Bach, Beethoven, Chopin, Mozart, and more. Open any score, listen, edit, or
+            fork it into your own arrangement. The library keeps growing.</p>
+          <a href="https://scoretail.com/en/sheet-music" class="open-card-link" target="_blank" rel="noopener">
+            Browse the library
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+              <path d="M5 12h14M12 5l7 7-7 7" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- =============== CTA =============== -->
+  <div class="final-cta">
+    <div class="container reveal">
+      <div class="staff-divider" style="margin:0 auto 40px">
+        <span></span><span></span><span></span><span></span><span></span>
+      </div>
+      <h2>Music is meant to be enjoyed.</h2>
+      <p>Open your browser. Start a score. Invite a friend.</p>
+      <a href="https://scoretail.com" target="_blank" rel="noopener">Start creating — it's free</a>
+    </div>
+  </div>
+
+  <!-- =============== Footer =============== -->
+  <footer>
+    <div class="footer-inner">
+      <div class="footer-left">&copy; 2026 ScoreTail</div>
+      <div class="footer-links">
+        <a href="https://scoretail.com" target="_blank" rel="noopener">App</a>
+        <a href="https://scoretail.com/en/docs" target="_blank" rel="noopener">Docs</a>
+        <a href="https://scoretail.com/en/sheet-music" target="_blank" rel="noopener">Free Sheet Music</a>
+        <a href="https://x.com/scoretail" target="_blank" rel="noopener">X</a>
+        <a href="https://github.com/tan-z-tan/scoretail" target="_blank" rel="noopener">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Scroll reveal
+    const obs = new IntersectionObserver(entries => {
+      entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+    }, { threshold: 0.15 });
+    document.querySelectorAll('.reveal').forEach(el => obs.observe(el));
+
+    // Nav background on scroll
+    addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', scrollY > 40);
+    });
+
+    // Collaboration cursor animation
+    (function () {
+      const paths = [
+        [{ l: 28, t: 18 }, { l: 50, t: 28 }, { l: 35, t: 45 }, { l: 62, t: 22 }, { l: 24, t: 36 }],
+        [{ l: 58, t: 48 }, { l: 38, t: 60 }, { l: 68, t: 40 }, { l: 48, t: 55 }, { l: 64, t: 66 }],
+        [{ l: 42, t: 72 }, { l: 55, t: 38 }, { l: 30, t: 58 }, { l: 70, t: 50 }, { l: 44, t: 46 }]
+      ];
+      const cursors = ['cursor1', 'cursor2', 'cursor3'].map(id => document.getElementById(id));
+      let i = 0;
+      setInterval(() => {
+        i = (i + 1) % 5;
+        cursors.forEach((c, j) => { c.style.left = paths[j][i].l + '%'; c.style.top = paths[j][i].t + '%'; });
+      }, 3000);
+    })();
+
+  </script>
+
+</body>
+
+</html>
