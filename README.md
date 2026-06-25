@@ -11,8 +11,8 @@
 <p align="center">
   <a href="https://scoretail.com">Website</a> ·
   <a href="https://scoretail.com/en/docs">Docs</a> ·
-  <a href="https://github.com/YOUR_USERNAME/scoretail/issues">Bug Reports</a> ·
-  <a href="https://github.com/YOUR_USERNAME/scoretail/issues">Feature Requests</a>
+  <a href="https://github.com/tan-z-tan/scoretail/issues">Bug Reports</a> ·
+  <a href="https://github.com/tan-z-tan/scoretail/issues">Feature Requests</a>
 </p>
 
 <p align="center">
@@ -116,23 +116,23 @@ ScoreTail is currently in **public beta**. Here's where we're headed:
 - [ ] Expanded classic music library
 - [ ] AI-assisted features
 
-Have a suggestion? [Open an issue](https://github.com/YOUR_USERNAME/scoretail/issues) — we'd love to hear it.
+Have a suggestion? [Open an issue](https://github.com/tan-z-tan/scoretail/issues) — we'd love to hear it.
 
 ## About This Repository
 
 The source code for ScoreTail is not publicly available at this time. This repository is used for:
 
-- 🐛 **Bug reports** — [Open an issue](https://github.com/YOUR_USERNAME/scoretail/issues)
-- 💡 **Feature requests** — [Open an issue](https://github.com/YOUR_USERNAME/scoretail/issues)
-- 📋 **Release notes** — [See releases](https://github.com/YOUR_USERNAME/scoretail/releases)
-- 💬 **Discussion** — [Join the discussion](https://github.com/YOUR_USERNAME/scoretail/discussions)
+- 🐛 **Bug reports** — [Open an issue](https://github.com/tan-z-tan/scoretail/issues)
+- 💡 **Feature requests** — [Open an issue](https://github.com/tan-z-tan/scoretail/issues)
+- 📋 **Release notes** — [See releases](https://github.com/tan-z-tan/scoretail/releases)
+- 💬 **Discussion** — [Join the discussion](https://github.com/tan-z-tan/scoretail/discussions)
 
 ## Contributing
 
 While the source code is currently closed, there are several ways to contribute:
 
-- Report bugs or suggest features via [Issues](https://github.com/YOUR_USERNAME/scoretail/issues)
-- Join the conversation in [Discussions](https://github.com/YOUR_USERNAME/scoretail/discussions)
+- Report bugs or suggest features via [Issues](https://github.com/tan-z-tan/scoretail/issues)
+- Join the conversation in [Discussions](https://github.com/tan-z-tan/scoretail/discussions)
 - Share ScoreTail with musicians, teachers, and students who might find it useful
 - Star ⭐ this repo to help others discover the project
 
